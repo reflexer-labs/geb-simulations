@@ -61,7 +61,7 @@ python -m pip install -r requirements.txt
 python -m ipykernel install --user --name python-reflexer --display-name "Python (Reflexer)"
 ```
 
-## Run a simulation
+## Run a Simulation
 
 ### Start Jupyter Lab
 
@@ -111,7 +111,7 @@ Notebooks analysing the system and showcasing how to perform experiments and ana
 1. [RAI Mainnet subgraph access](notebooks/analysis/TheGraphDataSetCreation.ipynb)
 2. [RAI Mainnet subgraph analysis](notebooks/analysis/TheGraphDataAnalysis.ipynb)
 
-# Parameter selection methodology
+# Parameter Selection Methodology
 
 * [System Parameter Methodology](parameter_methodology.md)
 
@@ -121,7 +121,7 @@ Requires NodeJS/NPM (v10.13.0)
 
 * Model code: `cross-model/`
 
-## Run cadCAD Cross-Model Simulation
+## Run the cadCAD Cross-Model Simulation
 
 Notebook to validate that the controller implementation in cadCAD matches the implementation in prod/Solidity.
 
