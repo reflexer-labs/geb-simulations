@@ -76,23 +76,17 @@ From Jupyter-Lab console, run `notebooks/experiments/system_model_v3/notebook-co
 
 Each model is located under `models/_`, with a unique name for each experiment.
 
-* `models/run.py` - script to run simulation experiments
-* `models/_/model` - model configuration (e.g. PSUBs, state variables)
-* `models/_/model/parts` - model logic, state update functions, and policy functions
+* `models/run.py` - script to run simulation experiments from cli(can also run from notebooks)
+* `models/system_model_v3/model` - model configuration (e.g. PSUBs, state variables)
+* `models/system_model_v3/model/parts` - model logic, state update functions, and policy functions
 
 Directories:
 
+* `cross-model/` - simulate solidity controller
 * `diagrams/` - system diagrams, used in documentation
 * `experiments/` - experiment results, code, and run logs.
-* `exports/` - exports from simulations, such as datasets, charts, etc.
-* `lib/` - third party libraries modified for use within models and simulations, such as Scipy which had to be patched
-* `logs/` - output directory for cadCAD model logs (local only, in `.gitignore`)
 * `models/` - system and subsystem models, as well as ML/regression model development
 * `notebooks/` - lab notebooks for model simulation and visualization using cadCAD (some notebooks have synced `.py` templates, see "Notebooks" below)
-* `plots/` - static plots used in notebooks
-* `simulations/` - execution of simulation notebooks using Papermill
-* `tests/` - `pytest` tests and misc. testing resources
-* `utils/` - utility code used within notebooks, for example generating plots
 
 Files:
 
@@ -120,10 +114,14 @@ Notebooks analysing the system and showcasing how to perform experiments and ana
 
 
 # Solidity / cadCAD "Cross Model"
+ 
+Requires NodeJS/NPM (v10.13.0)
 
 * Model code: `cross-model/`
-*
+
 ## Run cadCAD Cross-Model Simulation
+
+Notebook to validate the controller implementation in simulation matches the implementation in prod.
 
 ```bash
 cd ./cross-model/truffle
@@ -131,8 +129,3 @@ npm install
 npm run setup-network
 # Open and run notebooks/solidity_cadcad/notebook_solidity_validation.ipynb
 ```
-
-
-# Unit Tests
-
-`python -m pytest ./tests`
