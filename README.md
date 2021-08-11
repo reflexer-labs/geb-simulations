@@ -67,9 +67,7 @@ source venv/bin/activate
 jupyter-lab
 ```
 
-`jupyter-lab`
-
-From Jupyter-Lab console, run `notebooks/experiments/system_model_v3/notebook-controller-run-analyze-grouped.ipynb`
+From jupyter-lab, open and run `notebooks/experiments/system_model_v3/notebook-controller-run-analyze-grouped.ipynb`
 
 
 # Repo Structure
@@ -127,5 +125,6 @@ Notebook to validate the controller implementation in simulation matches the imp
 cd ./cross-model/truffle
 npm install
 npm run setup-network
+jupyter-lab
 # Open and run notebooks/solidity_cadcad/notebook_solidity_validation.ipynb
 ```
