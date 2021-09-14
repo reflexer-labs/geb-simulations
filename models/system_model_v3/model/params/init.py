@@ -42,7 +42,7 @@ params = {
     # Controller parameters
     'controller_enabled': [True],
     'enable_controller_time': [7 * 24 * 3600], # delay in enabling controller (7 days)
-    'kp': [0], # proportional term for the stability controller
+    'kp': [5e-8], # proportional term for the stability controller
     'ki': [0], # integral term for the stability controller
     'kd': [0],
     'khow': [0],
@@ -66,8 +66,8 @@ params = {
     'liquidation_penalty': [0], # Percentage added on top of collateral needed to liquidate CDP. This is needed in order to avoid auction grinding attacks.
     'debt_ceiling': [1e9],
     # redemption rate bounds used by rebalance and eth_leverage agents
-    'max_redemption_rate': [float("inf")],
-    'min_redemption_rate': [-100],
+    'max_redemption_rate': [50],
+    'min_redemption_rate': [-50],
 
     # System parameters
     'stability_fee': [lambda timestep, df=None: stability_fee], # per second interest rate (x% per month)
@@ -82,12 +82,12 @@ params = {
     'trader_market_premium': [1.00],
 
     'rate_trader_count': [100],
-    'rate_trader_mean_pct': [5],
-    'rate_trader_min_pct': [2],
-    'rate_trader_std_pct': [2 * (5-2)], 
-    'rate_trader_mean_days': [7],
+    'rate_trader_mean_pct': [3],
+    'rate_trader_min_pct': [0],
+    'rate_trader_std_pct': [2 * (3-0)], 
+    'rate_trader_mean_days': [0],
     'rate_trader_min_days': [0],
-    'rate_trader_std_days': [2 * (7-0)],
+    'rate_trader_std_days': [2 * (0-0)],
 
     'price_trader_count': [100],
     'price_trader_mean_pct': [5],
@@ -101,8 +101,8 @@ params = {
     'malicious_whale_kp': [200],
 
     # ETH leveragers. The file "liquidity.py" also contain liquidity parameters for the agent. The min needs to be higher than liquidation_ratio and max needs to be higher than min.
-    'eth_leverager_target_min_liquidity_ratio': [3.5],
-    'eth_leverager_target_max_liquidity_ratio': [4.1],
+    'eth_leverager_target_min_liquidity_ratio': [2.9],
+    'eth_leverager_target_max_liquidity_ratio': [2.9],
     
     # ETH leveragers external rates
     'malicious_rai_trader_max_balance': [100000],
