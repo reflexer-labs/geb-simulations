@@ -111,17 +111,17 @@ controller_off = df.query('controller_enabled==False')
 controller_on = df.query('controller_enabled==True')
 
 # calculate erros
-controller_off['error'] = controller_off['target_price_scaled'] - controller_off['market_price']
+controller_off['error'] = controller_off['target_price'] - controller_off['market_price']
 controller_off['error_integral'] = controller_off['error'].cumsum()
 
-controller_on['error'] = controller_on['target_price_scaled'] - controller_on['market_price']
+controller_on['error'] = controller_on['target_price'] - controller_on['market_price']
 controller_on['error_integral'] = controller_on['error'].cumsum()
 
 # %%
 sns.lineplot(data=controller_on,x="timestamp", y="eth_price",label='Generated Eth price')
 ax2 = plt.twinx()
 sns.lineplot(data=controller_on,x="timestamp", y="market_price",ax=ax2,color='r',label='Market Price in Rai')
-sns.lineplot(data=controller_on,x="timestamp", y="target_price_scaled",ax=ax2,color='g',label='Redemption Price in Rai')
+sns.lineplot(data=controller_on,x="timestamp", y="target_price",ax=ax2,color='g',label='Redemption Price in Rai')
 plt.title('Generated Eth price vs Simulation Market and Redemption Prices')
 plt.legend(loc="upper left")
 plt.savefig('experiments/system_model_v3/recommended_params/recommended_params.png')
@@ -134,7 +134,7 @@ controller_on.plot(x='timestamp',y='error_integral',kind='line',title='Steady st
 
 # %%
 sns.lineplot(data=controller_on,x="timestamp", y="market_price",color='r',label='Market Price in Rai')
-sns.lineplot(data=controller_on,x="timestamp", y="target_price_scaled",color='g',label='Redemption Price in Rai')
+sns.lineplot(data=controller_on,x="timestamp", y="target_price",color='g',label='Redemption Price in Rai')
 plt.title('Simulation Market and Redemption Prices')
 
 # %%
@@ -166,7 +166,7 @@ plt.show()
 sns.lineplot(data=controller_off,x="timestamp", y="eth_price",label='Generated Eth price')
 ax2 = plt.twinx()
 sns.lineplot(data=controller_off,x="timestamp", y="market_price",ax=ax2,color='r',label='Market Price in Rai')
-sns.lineplot(data=controller_off,x="timestamp", y="target_price_scaled",ax=ax2,color='g',label='Redemption Price in Rai')
+sns.lineplot(data=controller_off,x="timestamp", y="target_price",ax=ax2,color='g',label='Redemption Price in Rai')
 plt.title('Controller off')
 plt.legend(loc="upper left")
 plt.savefig('experiments/system_model_v3/recommended_params/recommended_params_controller_off.png')
@@ -176,11 +176,3 @@ controller_off.plot(x='timestamp',y='error',kind='line',title='Error')
 
 # %%
 controller_off.plot(x='timestamp',y='error_integral',kind='line',title='Steady state error')
-
-# %% [markdown]
-# Market price is lower than redemption price due to initial parameter mismatch. We can definitely see, however, that the system performs better with the controller turned on.  
-
-# %% [markdown]
-# ## Conclusion
-#
-# System simulation appears to be as expected with some parameter mismatch when the controller is turned off.
