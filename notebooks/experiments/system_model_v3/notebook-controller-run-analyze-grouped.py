@@ -48,7 +48,6 @@ png_renderer = pio.renderers["png"]
 png_renderer.width = 2000
 png_renderer.height = 1200
 
-
 from models.system_model_v3.model.params.init import params
 from experiments.system_model_v3.run import run_experiment
 from experiments.system_model_v3.post_process import post_process_results
@@ -60,10 +59,11 @@ from models.constants import RAY
 # %%
 # Number of timesteps(hours) to run
 # Max timesteps is 24*30*12 = 1 year
-SIMULATION_TIMESTEPS = 24 * 30 * 6
+SIMULATION_TIMESTEPS = 24 * 30 * 4
+SIMULATION_TIMESTEPS = 400
 
 # Number of runs. Each run uses a different simulated ETH dataset
-MONTE_CARLO_RUNS = 2
+MONTE_CARLO_RUNS = 1
 
 # %%
 # Set param values. These will override defaults
@@ -77,17 +77,20 @@ params_override = {
     'max_redemption_rate': [50], # used by SAFE owners
     'min_redemption_rate': [-50], # used by SAFE owners
     'kp': [5e-8],
-    'ki': [5e-14],
+    'ki': [1e-12],
     #'alpha': [1.0 * RAY],
-    'alpha': [0.9999 * RAY],
-    'rate_trader_mean_pct': [3],
-    'rate_trader_min_pct': [0],
-    'rate_trader_std_pct': [2 * (3-0)],
-    'rate_trader_mean_days': [0],
+    'alpha': [0.999999 * RAY],
+    'trader_market_premium': [1.00],
+    'rate_trader_count': [200],
+    'rate_trader_mean_pct': [1.5],
+    'rate_trader_min_pct': [1],
+    'rate_trader_std_pct': [2 * (1.5-1)],
+    'uniswap_fee': [0.003],
+    'rate_trader_mean_days': [1],
     'rate_trader_min_days': [0],
-    'rate_trader_std_days': [2 * (0-0)],
-    'eth_leverager_target_min_liquidity_ratio': [2.9],
-    'eth_leverager_target_max_liquidity_ratio': [2.9]
+    'rate_trader_std_days': [1 * (30-0)],
+    'eth_leverager_target_min_liquidity_ratio': [2.7],
+    'eth_leverager_target_max_liquidity_ratio': [2.7]
 }
 params.update(params_override)
 
@@ -98,12 +101,15 @@ params.update(params_override)
 start = time.time()
 df_raw = run_experiment(timesteps=SIMULATION_TIMESTEPS,
                runs=MONTE_CARLO_RUNS, params=params);
-df = post_process_results(df_raw, params)
-print(f"Run experiment and post-process took {time.time() - start} secs")
+
+print(f"Run experiment took {time.time() - start} secs")
+
+# %%
+df = post_process_results(df_raw, params, set_params=['kp', 'ki', 'rate_trader_std_days'])
 
 # %%
 # Optionally, trim results by timestep
-df_trim = df[df['timestep'] >= 20][df['timestep'] <= 24*30*12]
+df_trim = df[df['timestep'] >= 7*24][df['timestep'] <= 24*30*24]
 
 
 # %%
@@ -230,8 +236,7 @@ def group_plot(df, run):
             y=["error_star_integral"]
         )
     error_integral.data[0].name = "Error Integral"
-    
-    
+       
     target_rate = px.line(
             df.query(f'run == {run}'),
             title=f"RR",
@@ -239,6 +244,7 @@ def group_plot(df, run):
             color_discrete_sequence=["black"],
             y=["target_rate"]
     )
+    
     target_rate.data[0].name = "Redemption Rate"
 
     eth_leverager_cratio = px.line(
@@ -319,3 +325,37 @@ def group_plot(df, run):
 for run in range(1, MONTE_CARLO_RUNS + 1):
     print(f"{run=}")
     group_plot(df_trim, run)
+    #group_plot(df_trim[df_trim['rate_trader_std_days'] != 1], run)
+
+# %%
+df_trim.columns
+
+# %%
+df_trim['subset'].unique()
+
+# %%
+df_trim['market_price'].mean(), df_trim['market_price'].std()
+
+# %%
+df_trim['market_price_twap'].mean(), df_trim['market_price_twap'].std()
+
+# %%
+df_trim['error_star'].mean(), df_trim['error_star'].std() # error = target_price - market_twap
+
+# %%
+(df_trim['target_price'] - df_trim['market_price_twap']).mean()
+
+# %%
+(df_trim['target_price'] - df_trim['market_price']).mean()
+
+# %%
+(df_trim['market_price_twap'] - df_trim['market_price']).mean()
+
+# %%
+df_trim['target_price'].mean()
+
+# %%
+df_trim['target_rate'].mean()
+
+# %%
+df_trim[['market_price', 'market_price_twap']][:100].plot()

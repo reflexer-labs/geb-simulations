@@ -1,10 +1,11 @@
 import copy
 import time
 import pytest
-from uniswap_oracle_new import UniswapOracle
+from uniswap_oracle import UniswapOracle
 import random
 import numpy as np
 
+"""
 cumulative_times = list(range(0, 40000000, 3600))
 rai_balances = [random.randint(1000, 1000000) for _ in range(len(cumulative_times))]
 eth_balances = [random.randint(1000, 1000000) for _ in range(len(cumulative_times))]
@@ -29,13 +30,14 @@ data = [(106777.60615294595, 10000000.0, 294.06915111978924),
 (108772.8507647438, 9819102.404863937, 288.0325865337643),
 (109044.40530388973, 9794722.956725033, 286.11984995085186),
 (109775.57032337232, 9729679.18808664, 286.15691766760153)]
+
 eth_balances = [x[0] for x in data]
 rai_balances = [x[1] for x in data]
 eth_prices = [x[2] for x in data]
-"""
-@pytest.mark.skip('tmp')
+
+#@pytest.mark.skip('tmp')
 class TestUniswapOracle:
-    def test_speed(self):
+    def test_deepcopy_speed(self):
         o = UniswapOracle()
 
         states = [{'RAI_balance': rai_balances[i], 'ETH_balance': eth_balances[i],
@@ -45,4 +47,16 @@ class TestUniswapOracle:
             o.update_result(state)
             copy.deepcopy(o)
         print(f"took {time.time() - s} secs")
+
+    def test_median(self):
+        o = UniswapOracle(granularity=4, window_size=16*3600, max_window_size=21*3600)
+
+        states = [{'RAI_balance': rai_balances[i], 'ETH_balance': eth_balances[i],
+                   'eth_price': eth_prices[i], 'cumulative_time': cumulative_times[i]} for i in range(len(cumulative_times))]
+        for i, state in enumerate(states):
+            rai_usd = state['ETH_balance'] / state['RAI_balance'] * state['eth_price']
+            o.update_result(state)
+            #print(o.converter_feed_observations)
+            #print(o.uniswap_observations)
+            print(f"{i=}, {rai_usd=}, {o.median_price=}")
 

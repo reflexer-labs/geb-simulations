@@ -65,7 +65,7 @@ def p_trade_rate(params, substep, state_history, state):
     updated_traders = []
 
     # process traders in random order
-    for rate_trader in random.sample(state['rate_traders'], len(state['rate_traders'])):
+    for i, rate_trader in enumerate(random.sample(state['rate_traders'], len(state['rate_traders']))):
         effective_rate = 0
         try:
             effective_rate = float((1 + Decimal(state['target_rate'])) ** Decimal(60*60*24*rate_trader['days']))
@@ -96,18 +96,18 @@ def p_trade_rate(params, substep, state_history, state):
         UNI_delta = 0
 
         expensive_RAI = redemption_price * (1 + rate_trader_bound) < (1 - uniswap_fee) * market_price
-        cheap_RAI = redemption_price * (1 - rate_trader_bound) > (1 - uniswap_fee) * market_price
+        cheap_RAI = redemption_price * (1 - rate_trader_bound) > (1 + uniswap_fee) * market_price
 
         # How far to trade to the peg. 1 = all the way
-        trade_ratio = random.random()
+        trade_ratio = random.uniform(0.8, 1.0)
+        trade_ratio = 1.0
         if expensive_RAI and trader_rai_balance > 0:
             # sell rai to redemption price
             if params['debug']:
                 print(f"{timestep=}, {ETH_balance=},{RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
+
             # sell to redemption
-            #desired_eth_rai = ETH_balance/RAI_balance * (redemption_price/market_price)
             try:
-                #a = math.sqrt(RAI_balance * ETH_balance/desired_eth_rai) - RAI_balance
                 a = sell_to_price(ETH_balance, RAI_balance, redemption_price, market_price)
             except ValueError as e:
                 raise failure.PriceTraderConditionException(f'{RAI_balance=}, {ETH_balance=}, {desired_eth_rai=}')
