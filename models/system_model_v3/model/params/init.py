@@ -83,7 +83,7 @@ params = {
 
     'rate_trader_count': [100],
     'rate_trader_mean_pct': [3],
-    'rate_trader_min_pct': [0],
+    'rate_trader_min_pct': [1],
     'rate_trader_std_pct': [2 * (3-0)], 
     'rate_trader_mean_days': [0],
     'rate_trader_min_days': [0],

@@ -64,10 +64,11 @@ from models.constants import RAY
 # %%
 # Number of timesteps(hours) to run
 # Max timesteps is 24 * 30 * 12 = 1 year
-SIMULATION_TIMESTEPS = 24 * 30 * 3
+SIMULATION_TIMESTEPS = 24 * 30 * 1
+#SIMULATION_TIMESTEPS = 24 * 2
 
 # Number of runs. Each run uses a different simulated ETH dataset
-MONTE_CARLO_RUNS = 2
+MONTE_CARLO_RUNS = 1
 
 # %% [markdown]
 # ### Parameters
@@ -83,15 +84,18 @@ params_override = {
     'liquidation_buffer': [2],
     'max_redemption_rate': [50], # used by SAFE owners
     'min_redemption_rate': [-50], # used by SAFE owners
-    'kp': [1e-8, 1e-7],
-    'ki': [5e-15, 5e-14],
-    'alpha': [0.9999 * RAY],
+    #'kp': [1e-8, 1e-7],
+    #'ki': [5e-15, 5e-14],
+    'kp': [5e-7],
+    'ki': [0],
+    'alpha': [0.999999 * RAY],
     'rate_trader_mean_pct': [3],
-    'rate_trader_min_pct': [0],
+    'rate_trader_min_pct': [1],
     'rate_trader_std_pct': [2 * (3-0)],
     'rate_trader_mean_days': [0],
     'rate_trader_min_days': [0],
     'rate_trader_std_days': [2 * (0-0)],
+    'uniswap_fee': [0],
     'eth_leverager_target_min_liquidity_ratio': [2.9],
     'eth_leverager_target_max_liquidity_ratio': [2.9]
 }
@@ -110,7 +114,11 @@ print(f"Run experiment and post-process took {time.time() - start} secs")
 
 # %%
 # Optionally, trim results by timestep
-df_trim = df[df['timestep'] >= 20][df['timestep'] <= 24*30*12]
+#df_trim = df
+df_trim = df[df['timestep'] >= 17][df['timestep'] <= 24*30*12]
+
+# %%
+df_trim['market_price'].head(3)
 
 
 # %%
@@ -148,14 +156,15 @@ def facet_plot(df, run, facet_col, facet_row):
         df.query(f'run == {run}'),
         title=f"RAI/USD",
         x="timestamp",       
-        y=["market_price_twap", "target_price"],
-        color_discrete_sequence=['purple', 'red'],
-        labels={'timestamp': '', 'target_price': '', 'market_price_twap': '', 'value': ''},
+        y=["market_price", "market_price_twap", "target_price"],
+        color_discrete_sequence=['purple', 'black', 'red'],
+        labels={'timestamp': '', 'target_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
         facet_col=f'{facet_col}',
         facet_row=f'{facet_row}'
     )
-    fig.data[0].name = "RAI/USD TWAP"
-    fig.data[1].name = "Redemption Price"
+    fig.data[0].name = "RAI/USD"
+    fig.data[1].name = "RAI/USD TWAP"
+    fig.data[2].name = "Redemption Price"
     #fig.for_each_annotation(lambda a: a.update(text=a.text.replace("max_redemption_rate", "max rate")))
 
     fig.update_layout(title_x=0.5)

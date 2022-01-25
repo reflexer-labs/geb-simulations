@@ -57,7 +57,23 @@ partial_state_update_blocks_unprocessed = [
         }
     },
     #################################################################
+    {   
+        'details': '''
+            Exogenous u,v activity: liquidate CDPs
+        ''',
+        'enabled': False,
+        'policies': {
+            'liquidate_cdps': p_liquidate_cdps
+        },
+        'variables': {
+            'cdps': s_store_cdps,
+        }
+    },
+    #################################################################
     {
+        'details': '''
+            Exogenous liquidity demand process
+        ''',
         'enabled': True,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
@@ -69,18 +85,6 @@ partial_state_update_blocks_unprocessed = [
             'liquidity_demand': markets.s_liquidity_demand,
             'liquidity_demand_mean': markets.s_liquidity_demand_mean,
             'market_slippage': markets.s_slippage,
-        }
-    },
-    #################################################################
-    {
-        'enabled': True,
-        'policies': {
-            'market_price': markets.p_market_price
-        },
-        'variables': {
-            'market_price': markets.s_market_price,
-            'market_price_twap': markets.s_market_price_twap,
-            'uniswap_oracle': markets.s_uniswap_oracle
         }
     },
     #################################################################
@@ -244,42 +248,13 @@ partial_state_update_blocks_unprocessed = [
     #################################################################
     {
         'details': '''
-            Aggregate states
+            Endogenous w activity
         ''',
         'enabled': True,
         'policies': {},
         'variables': {
-            'eth_locked': s_update_eth_locked,
-            'eth_freed': s_update_eth_freed,
-            'eth_bitten': s_update_eth_bitten,
-            'rai_drawn': s_update_rai_drawn,
-            'rai_wiped': s_update_rai_wiped,
-            'rai_bitten': s_update_rai_bitten,
-        }
-    },
-    #################################################################
-    {
-        'details': '''
-            Update debt market state
-        ''',
-        'enabled': True,
-        'policies': {},
-        'variables': {
-            'eth_collateral': s_update_eth_collateral,
-            'principal_debt': s_update_principal_debt,
-        }
-    },
-    #################################################################
-    {   
-        'details': '''
-            Exogenous u,v activity: liquidate CDPs
-        ''',
-        'enabled': False,
-        'policies': {
-            'liquidate_cdps': p_liquidate_cdps
-        },
-        'variables': {
-            'cdps': s_store_cdps,
+            'accrued_interest': s_update_accrued_interest,
+            'cdps': s_update_cdp_interest
         }
     },
     #################################################################
@@ -300,14 +275,14 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
-        'details': '''
-            Endogenous w activity
-        ''',
         'enabled': True,
-        'policies': {},
+        'policies': {
+            'market_price': markets.p_market_price
+        },
         'variables': {
-            'accrued_interest': s_update_accrued_interest,
-            'cdps': s_update_cdp_interest
+            'market_price': markets.s_market_price,
+            'market_price_twap': markets.s_market_price_twap,
+            'uniswap_oracle': markets.s_uniswap_oracle
         }
     },
     #################################################################
@@ -366,6 +341,19 @@ partial_state_update_blocks_unprocessed = [
     #################################################################
     {
         'details': '''
+            Update debt market state
+        ''',
+        'enabled': True,
+        'policies': {},
+        'variables': {
+            'eth_collateral': s_update_eth_collateral,
+            'principal_debt': s_update_principal_debt,
+            'stability_fee': s_update_stability_fee,
+        }
+    },
+    #################################################################
+    {
+        'details': '''
             Aggregate states
         ''',
         'enabled': True,
@@ -379,19 +367,6 @@ partial_state_update_blocks_unprocessed = [
             'rai_bitten': s_update_rai_bitten,
             'accrued_interest': s_update_interest_bitten,
             'system_revenue': s_update_system_revenue,
-        }
-    },
-    #################################################################
-    {
-        'details': '''
-            Update debt market state
-        ''',
-        'enabled': True,
-        'policies': {},
-        'variables': {
-            'eth_collateral': s_update_eth_collateral,
-            'principal_debt': s_update_principal_debt,
-            'stability_fee': s_update_stability_fee,
         }
     },
     #################################################################

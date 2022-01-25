@@ -29,16 +29,16 @@ liquidation_buffer = 2
 liquidity_cdp_count = 100 # Set to zero to disable liquidity CDPs
 
 """Initial balances for RAI/ETH Uniswap v2 pool."""
-uniswap_rai_balance = 5e6
+uniswap_rai_balance = 10e6
 uniswap_eth_balance = uniswap_rai_balance * target_price / eth_price
 
 """Total capital given to all agents."""
 total_starting_capital = 20e6 # Base
 
 """Capital share allocation for each agent."""
-capital_allocation =  {'price_traders': 0/20, 'rate_traders': 5/20, 'eth_leverager': 0/20,
+capital_allocation =  {'price_traders': 0/20, 'rate_traders': 5/20, 'eth_leverager': 5/20,
                        'malicious_whale': 0, 'arbitrage_cdp': 0, 'rai_lender': 0/20,
-                       'rai_borrower': 0/20, 'base_rate_trader': 0/20, 'liquidity_cdps': 20/20,
+                       'rai_borrower': 0/20, 'base_rate_trader': 0/20, 'liquidity_cdps': 0/20,
                        'malicious_rai_trader': 0
                        }
 

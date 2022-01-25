@@ -4,8 +4,7 @@ import numpy as np
 
 #eth_price_df = pd.read_csv('models/system_model_v3/data/eth_values_gold.csv.gz', 
 #eth_price_df = pd.read_csv('models/system_model_v3/data/ohm_values_mc.csv.gz', 
-#eth_price_df = pd.read_csv('models/system_model_v3/data/eth_values_mc.csv.gz', 
-#eth_price_df = pd.read_csv('models/system_model_v3/data/ohm_values_mc.csv.gz', 
+#eth_price_df = pd.read_csv('models/system_model_v3/data/eth.constant.csv.gz', 
 eth_price_df = pd.read_csv('models/system_model_v3/data/eth_values_mc.csv.gz', 
                            compression='gzip',
                            index_col=0)
