@@ -74,9 +74,6 @@ def p_trade_rate(params, substep, state_history, state):
         
         # calculate future redemption price
         redemption_price = state['target_price'] * effective_rate * params['trader_market_premium']
-        #if timestep > 7 * 24:
-        #    print(f"{timestep=}, {i=}, {state['target_price']=:.6f}")
-        #    print(f"{timestep=}, {i=}, {rate_trader['days']=}, {effective_rate=:.16f}, effective target price={redemption_price:.6f}")
 
         # get latest market price
         market_price = ETH_balance/RAI_balance * eth_price
@@ -100,9 +97,6 @@ def p_trade_rate(params, substep, state_history, state):
 
         expensive_RAI = redemption_price * (1 + rate_trader_bound) < (1 - uniswap_fee) * market_price
         cheap_RAI = redemption_price * (1 - rate_trader_bound) > (1 + uniswap_fee) * market_price
-        #i=14 pre rate-trader market price 3.149396 3.140000, 0.00, cheap_RAI=True, expensive_RAI=False
-        #if timestep > 7 * 24:
-        #    print(f"{timestep=}, {i=} pre rate-trader mp:{market_price:.6f}, rp:{redemption_price:.6f}, {rate_trader_bound:.4f}, {rate_trader['days']}, {cheap_RAI=}, {expensive_RAI=}")
 
         # How far to trade to the peg. 1 = all the way
         trade_ratio = random.uniform(0.8, 1.0)
@@ -113,15 +107,12 @@ def p_trade_rate(params, substep, state_history, state):
                 print(f"{timestep=}, {ETH_balance=},{RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
 
             # sell to redemption
-            #desired_eth_rai = ETH_balance/RAI_balance * (redemption_price/market_price)
             try:
-                #a = math.sqrt(RAI_balance * ETH_balance/desired_eth_rai) - RAI_balance
                 a = sell_to_price(ETH_balance, RAI_balance, redemption_price, market_price)
             except ValueError as e:
                 raise failure.PriceTraderConditionException(f'{RAI_balance=}, {ETH_balance=}, {desired_eth_rai=}')
 
-            if a < 0:
-                raise failure.PriceTraderConditionException(f'{a=}')
+            if a < 0: raise failure.PriceTraderConditionException(f'{a=}')
 
             # sell as much as we have or enough to move market to redemption price
             RAI_delta = min(trader_rai_balance, a * trade_ratio)
@@ -150,8 +141,6 @@ def p_trade_rate(params, substep, state_history, state):
             # update pool locally after each trader
             RAI_balance += RAI_delta
             ETH_balance += ETH_delta
-            #if state['timestep'] > 7 * 24:
-            #    print(f"{i=} post rate-trader sell market price {(ETH_balance/RAI_balance * eth_price):.6f}")
            
         elif cheap_RAI and trader_base_balance > 0:
             # buy rai to redemption price
@@ -165,8 +154,7 @@ def p_trade_rate(params, substep, state_history, state):
             except ValueError as e:
                 raise failure.PriceTraderConditionException(f'{RAI_balance=}, {ETH_balance=}, {desired_eth_rai=}')
 
-            if a < 0:
-                raise failure.PriceTraderConditionException(f'{a=}')
+            if a < 0: raise failure.PriceTraderConditionException(f'{a=}')
 
             eth = trader_base_balance / eth_price
             _, rai_to_buy = get_input_price(eth, ETH_balance, RAI_balance, uniswap_fee)
@@ -198,8 +186,6 @@ def p_trade_rate(params, substep, state_history, state):
             # update pool locally after each trader
             RAI_balance -= RAI_delta
             ETH_balance += ETH_delta
-            #if state['timestep'] > 7 * 24:
-            #    print(f"{i=} post rate-trader buy market price {(ETH_balance/RAI_balance * eth_price):.6f}")
 
         updated_traders.append(updated_trader)
 
