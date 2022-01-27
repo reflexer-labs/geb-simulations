@@ -65,7 +65,7 @@ from models.constants import RAY
 # Number of timesteps(hours) to run
 # Max timesteps is 24 * 30 * 12 = 1 year
 SIMULATION_TIMESTEPS = 24 * 30 * 1
-#SIMULATION_TIMESTEPS = 24 * 2
+#SIMULATION_TIMESTEPS = 24*7
 
 # Number of runs. Each run uses a different simulated ETH dataset
 MONTE_CARLO_RUNS = 1
@@ -86,7 +86,7 @@ params_override = {
     'min_redemption_rate': [-50], # used by SAFE owners
     #'kp': [1e-8, 1e-7],
     #'ki': [5e-15, 5e-14],
-    'kp': [5e-7],
+    'kp': [5e-8],
     'ki': [0],
     'alpha': [0.999999 * RAY],
     'rate_trader_mean_pct': [3],
@@ -115,10 +115,10 @@ print(f"Run experiment and post-process took {time.time() - start} secs")
 # %%
 # Optionally, trim results by timestep
 #df_trim = df
-df_trim = df[df['timestep'] >= 17][df['timestep'] <= 24*30*12]
+df_trim = df[df['timestep'] >= 24*7][df['timestep'] <= 24*10]
 
 # %%
-df_trim['market_price'].head(3)
+df_trim['timestep'].head(3)
 
 
 # %%
@@ -156,20 +156,21 @@ def facet_plot(df, run, facet_col, facet_row):
         df.query(f'run == {run}'),
         title=f"RAI/USD",
         x="timestamp",       
-        y=["market_price", "market_price_twap", "target_price"],
-        color_discrete_sequence=['purple', 'black', 'red'],
-        labels={'timestamp': '', 'target_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
+        y=["curve_market_price", "market_price", "market_price_twap", "target_price"],
+        color_discrete_sequence=['blue', 'purple', 'black', 'red'],
+        labels={'timestamp': '', 'target_price': '', 'curve_market_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
         facet_col=f'{facet_col}',
         facet_row=f'{facet_row}'
     )
-    fig.data[0].name = "RAI/USD"
-    fig.data[1].name = "RAI/USD TWAP"
-    fig.data[2].name = "Redemption Price"
+    fig.data[0].name = "RAI/USD Curve"
+    fig.data[1].name = "RAI/USD Feed"
+    fig.data[2].name = "RAI/USD TWAP"
+    fig.data[3].name = "Redemption Price"
     #fig.for_each_annotation(lambda a: a.update(text=a.text.replace("max_redemption_rate", "max rate")))
 
     fig.update_layout(title_x=0.5)
     fig.update_layout({'legend_title_text': '', 'legend_x': 0.0, 'legend_y': 0})
-    fig.update_layout(showlegend=False)
+    fig.update_layout(showlegend=True)
     fig.update_layout(font={'size': 24})
     fig.update_traces(line=dict(width=2))
     fig.update_layout(yaxis={'title': ''}, xaxis={'title': ''})

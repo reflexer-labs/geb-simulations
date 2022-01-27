@@ -77,7 +77,7 @@ params_override = {
     'max_redemption_rate': [50], # used by SAFE owners
     'min_redemption_rate': [-50], # used by SAFE owners
     'kp': [5e-8],
-    'ki': [1e-12],
+    'ki': [0],
     #'alpha': [1.0 * RAY],
     'alpha': [0.999999 * RAY],
     'trader_market_premium': [1.00],

@@ -74,7 +74,7 @@ partial_state_update_blocks_unprocessed = [
         'details': '''
             Exogenous liquidity demand process
         ''',
-        'enabled': False,
+        'enabled': True,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
         },
@@ -89,20 +89,33 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
+        'details': '''
+            Resolve expected price and store in state
+        ''',
+        'enabled': False,
+        'policies': {
+            'market': p_resolve_expected_market_price
+        },
+        'variables': {
+            'expected_market_price': s_store_expected_market_price
+        }
+    },
+    #################################################################
+    {
         'details': """
-            General Agents 
+            APT model
         """,
         'enabled': False,
         'policies': {
-            'trade_rate': p_trade_rate
+            'arbitrage': p_arbitrageur_model
         },
         'variables': {
-            'rate_traders': s_store_rate_traders,
+            'cdps': s_store_cdps,
+            'optimal_values': s_store_optimal_values,
             'RAI_balance': uniswap.update_RAI_balance,
             'ETH_balance': uniswap.update_ETH_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
-
     },
     #################################################################
     {
@@ -262,43 +275,14 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
-        'details': """
-        Get all spot market prices 
-        """,
-        'enabled': True,
-        'policies': {
-            'curve_market_price': markets.p_curve_market_price
-        },
-        'variables': {
-            'curve_market_price': markets.s_curve_market_price
-        }
-    },
-    #################################################################
-    {
-        'details': """
-        Update Chainlink feed 
-        """,
         'enabled': True,
         'policies': {
             'market_price': markets.p_market_price
         },
         'variables': {
             'market_price': markets.s_market_price,
-            'market_price_timestamp': markets.s_market_price_timestamp
-        }
-    },
-    #################################################################
-    {
-        'details': """
-        Update Chainlink TWAP
-        """,
-        'enabled': True,
-        'policies': {
-            'market_price_twap': markets.p_market_price_twap
-        },
-        'variables': {
             'market_price_twap': markets.s_market_price_twap,
-            'market_price_twap_obj': markets.s_market_price_twap_obj
+            'uniswap_oracle': markets.s_uniswap_oracle
         }
     },
     #################################################################

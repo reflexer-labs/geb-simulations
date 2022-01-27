@@ -10,6 +10,9 @@ from models.system_model_v3.model.state_variables.liquidity import base_rate_tra
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
+from models.system_model_v3.model.parts.chainlink_twap import ChainlinkTWAP
+#from models.system_model_v3.model.parts.twap import RaiTWAP
+#from models.system_model_v3.model.parts.curve import RaiCurvePool
 
 import datetime as dt
 
@@ -90,17 +93,51 @@ state_variables = {
     'error_star': 0, # price units
     'prev_error_star': 0, # price units
     'error_star_integral': 0, # price units x seconds
-    
+  
+
+    'curve_market_price': 0,
+    'market_price_timestamp': 0,
+    'market_price_feed': 0,
+    'market_price_twap_obj': ChainlinkTWAP(
+        granularity=3,
+        window_size=24*3600,
+        max_window_size=4*24*3600
+    ),
+
+    """
+    # Curve states
+    'rai_curve_pool': RaiCurvePool(
+        a=100,
+        rai_balance=curve_rai_balance,
+        three_crv_balance=three_crv_balance
+    ),
+
+    # Chainlink states
+    'chainlink_feed': ChainlinkFeed( 
+        staleness=24*3600, # 24 hours
+        deviation_threshold=0.005 # 0.5%
+    ),
+
+    # Chainlink TWAP
+    'rai_twap': RaiTWAP(
+        period_size=8*3600, # 8 hours
+        window_size=24*3600, # 24 hours
+        max_window_size=4*24*3600, # 4 days
+        granularity=3, # granularity = window_size / period_size
+        stale_threshold=21600
+    ),
+    """
     # Uniswap states
     'market_slippage': 0,
     'RAI_balance': uniswap_rai_balance,
     'ETH_balance': uniswap_eth_balance,
     'UNI_supply': uniswap_rai_balance,
-    'uniswap_oracle': UniswapOracle(
-        window_size=16*3600, # 16 hours
-        max_window_size=24*3600, # 24 hours
-        granularity=4 # period = window_size / granularity
-    ),
+
+    #'uniswap_oracle': UniswapOracle(
+    #    window_size=16*3600, # 16 hours
+    #    max_window_size=24*3600, # 24 hours
+    #    granularity=4 # period = window_size / granularity
+    #),
 
     # price pump whale
     'malicious_whale_funds_eth': malicious_whale_eth_balance,
