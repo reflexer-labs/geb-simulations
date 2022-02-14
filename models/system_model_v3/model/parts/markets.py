@@ -126,19 +126,19 @@ def s_uniswap_oracle(params, substep, state_history, state, policy_input):
     return "uniswap_oracle", policy_input["uniswap_oracle"]
 
 # New
-def p_curve_market_price(params, substep, state_history, state):
-    """Calculates market price of RAI in Curve RAI/3CRV pool"""
-    curve_market_price = random.uniform(2.99, 3.01)
-    return {"curve_market_price": curve_market_price}
+def p_spot_market_price(params, substep, state_history, state):
+    """Calculates market price of RAI """
+    spot_market_price = state['USD_balance'] / state['RAI_balance']
+    return {"spot_market_price": spot_market_price}
 
-def s_curve_market_price(params, substep, state_history, state, policy_input):
-    return "curve_market_price", policy_input["curve_market_price"]
+def s_spot_market_price(params, substep, state_history, state, policy_input):
+    return "spot_market_price", policy_input["spot_market_price"]
 
 def p_market_price(params, substep, state_history, state):
     """Calculates Chainlink RAI/USD feed answer """
 
     # can be some median of market prices in the future
-    current_answer = state['curve_market_price']
+    current_answer = state['spot_market_price']
 
     # price movement
     if abs((current_answer - state['market_price']) / state['market_price']) >= params['chainlink_deviation_threshold']:

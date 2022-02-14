@@ -18,7 +18,7 @@ def post_process_results(df, params=None, set_params=['kp', 'ki']):
     df.eval('apy = ((1 + target_rate) ** (60*60*24*356) - 1) * 100', inplace=True)
 
 
-    df['rai_eth'] = df['ETH_balance'] / df['RAI_balance']
+    #df['rai_eth'] = df['ETH_balance'] / df['RAI_balance']
 
     df['rate_trader_total_base'], df['rate_trader_base'], df['rate_trader_total_rai_base'] = \
         zip(*df.apply(profits.rate_trader_balances, axis = 1))
