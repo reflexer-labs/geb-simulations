@@ -103,29 +103,9 @@ def s_liquidity_demand_mean(params, substep, state_history, state, policy_input)
     liquidity_demand_mean = (state['liquidity_demand_mean'] + liquidity_demand) / 2
     return 'liquidity_demand_mean', liquidity_demand_mean
 
-'''
-
-def p_market_price(params, substep, state_history, state):
-    """Calculates market price of RAI based on the Uniswap balances """
-    market_price = (state['ETH_balance'] / state['RAI_balance']) * state['eth_price']
-
-    uniswap_oracle = copy.deepcopy(state['uniswap_oracle'])
-    uniswap_oracle.update_result(state)
-    median_price = uniswap_oracle.median_price
-
-    return {"market_price": market_price, "market_price_twap": median_price, "uniswap_oracle": uniswap_oracle}
-
-def s_market_price(params, substep, state_history, state, policy_input):
-    return "market_price", policy_input["market_price"]
-
-def s_market_price_twap(params, substep, state_history, state, policy_input):
-    return "market_price_twap", policy_input["market_price_twap"]
-'''
-
 def s_uniswap_oracle(params, substep, state_history, state, policy_input):
     return "uniswap_oracle", policy_input["uniswap_oracle"]
 
-# New
 def p_spot_market_price(params, substep, state_history, state):
     """Calculates market price of RAI """
     spot_market_price = state['USD_balance'] / state['RAI_balance']
@@ -161,14 +141,6 @@ def s_market_price(params, substep, state_history, state, policy_input):
 def s_market_price_timestamp(params, substep, state_history, state, policy_input):
     return "market_price_timestamp", policy_input["market_price_timestamp"]
 
-'''
-def p_market_price_twap(params, substep, state_history, state):
-    """Calculates Chainlink RAI/USD TWAP """
-    twap_value = 3.50
-    twap_obj = None
-
-    return {"market_price_twap": twap_value, "market_price_twap_obj": twap_obj}
-'''
 def p_market_price_twap(params, substep, state_history, state):
     """Calculates Chainlink RAI/USD TWAP """
 

@@ -123,8 +123,7 @@ def group_plot(df, run):
                         subplot_titles=["ETH/USD","Kp rate(blue), Ki rate(red)", "Redemption Rate", 
                                         "RAI/USD", "Error",  "Rate Trader balances, RAI(purple), USD(green)",
                                         "Rate APY", "Error Integral", "ETH Leverager Collateral",
-                                        "Total Debt", "Total Collateral", "Total C-Ratio",
-                                        "RAI/ETH"])
+                                        "Total Debt", "Total Collateral", "Total C-Ratio"])
    
     eth_usd = px.line(
             df.query(f'run == {run}'),
@@ -137,7 +136,7 @@ def group_plot(df, run):
         )
     eth_usd.data[0].name = "ETH/USD"
     eth_usd.update_layout(title_x=0.5)
-    
+    """
     rai_eth = px.line(
             df.query(f'run == {run}'),
             title=f"RAI/ETH",
@@ -149,7 +148,7 @@ def group_plot(df, run):
         )
     rai_eth.data[0].name = "RAI/ETH"
     rai_eth.update_layout(title_x=0.5)
-
+    """
     rai_usd = px.line(
             df.query(f'run == {run}'),
             title=f"RAI/USD",
@@ -290,7 +289,7 @@ def group_plot(df, run):
     fig.add_trace(rai_usd.data[1], row=2, col=1)
     fig.add_trace(rai_apy.data[0], row=3, col=1)
     fig.add_trace(total_debt.data[0], row=4, col=1)
-    fig.add_trace(rai_eth.data[0], row=5, col=1)
+    #fig.add_trace(rai_eth.data[0], row=5, col=1)
 
     # Second column
     fig.add_trace(rate_comps.data[0], row=1, col=2)

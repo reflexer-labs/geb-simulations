@@ -161,13 +161,13 @@ def facet_plot(df, run, facet_col, facet_row):
         df.query(f'run == {run}'),
         title=f"RAI/USD",
         x="timestamp",       
-        y=["curve_market_price", "market_price", "market_price_twap", "target_price"],
+        y=["spot_market_price", "market_price", "market_price_twap", "target_price"],
         color_discrete_sequence=['blue', 'purple', 'black', 'red'],
-        labels={'timestamp': '', 'target_price': '', 'curve_market_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
+        labels={'timestamp': '', 'target_price': '', 'spot_market_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
         facet_col=f'{facet_col}',
         facet_row=f'{facet_row}'
     )
-    fig.data[0].name = "RAI/USD Curve"
+    fig.data[0].name = "RAI/USD Spot"
     fig.data[1].name = "RAI/USD Feed"
     fig.data[2].name = "RAI/USD TWAP"
     fig.data[3].name = "Redemption Price"
