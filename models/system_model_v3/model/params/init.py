@@ -78,6 +78,10 @@ params = {
     'swap_gas_used': [103834],
     'cdp_gas_used': [(369e3 + 244e3) / 2], # Deposit + borrow; repay + withdraw
 
+    # Chainlink RAI/USD Feed
+    'chainlink_deviation_threshold': [0.005],
+    'chainlink_staleness_threshold': [86400],
+
     # rate and price traders
     'trader_market_premium': [1.00],
 

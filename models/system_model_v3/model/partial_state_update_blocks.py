@@ -74,13 +74,13 @@ partial_state_update_blocks_unprocessed = [
         'details': '''
             Exogenous liquidity demand process
         ''',
-        'enabled': True,
+        'enabled': False,
         'policies': {
             'liquidity_demand': markets.p_liquidity_demand
         },
         'variables': {
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
             'liquidity_demand': markets.s_liquidity_demand,
             'liquidity_demand_mean': markets.s_liquidity_demand_mean,
@@ -89,31 +89,34 @@ partial_state_update_blocks_unprocessed = [
     },
     #################################################################
     {
-        'details': '''
-            Resolve expected price and store in state
-        ''',
+        'details': """
+            General Agents 
+        """,
         'enabled': False,
         'policies': {
-            'market': p_resolve_expected_market_price
+            'trade_rate': p_trade_rate
         },
         'variables': {
-            'expected_market_price': s_store_expected_market_price
+            'rate_traders': s_store_rate_traders,
+            'RAI_balance': uniswap.update_RAI_balance,
+            'USD_balance': uniswap.update_USD_balance,
+            'UNI_supply': uniswap.update_UNI_supply,
         }
+
     },
     #################################################################
     {
         'details': """
-            APT model
+        Rebalance CDPs using wipes and draws 
         """,
-        'enabled': False,
+        'enabled': True,
         'policies': {
-            'arbitrage': p_arbitrageur_model
+            'rebalance_cdps': p_rebalance_cdps,
         },
         'variables': {
             'cdps': s_store_cdps,
-            'optimal_values': s_store_optimal_values,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
     },
@@ -129,7 +132,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'rate_traders': s_store_rate_traders,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
 
@@ -146,7 +149,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'price_traders': s_store_price_traders,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
     },
@@ -165,7 +168,7 @@ partial_state_update_blocks_unprocessed = [
             'malicious_whale_state': s_store_malicious_whale_state,
             'malicious_whale_p0': s_store_malicious_whale_p0,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance
+            'USD_balance': uniswap.update_USD_balance
         }
     },
     #################################################################
@@ -180,7 +183,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'rai_borrower_state': s_store_rai_borrower_state,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance
+            'USD_balance': uniswap.update_USD_balance
         }
     },
     #################################################################
@@ -195,7 +198,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'rai_lender_state': s_store_rai_lender_state,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance
+            'USD_balance': uniswap.update_USD_balance
         }
     },
     #################################################################
@@ -210,7 +213,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'base_rate_trader_state': s_store_base_rate_trader_state,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance
+            'USD_balance': uniswap.update_USD_balance
         }
     },
     #################################################################
@@ -225,7 +228,7 @@ partial_state_update_blocks_unprocessed = [
         'variables': {
             'malicious_rai_trader_state': s_store_malicious_rai_trader_state,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
     },
@@ -234,14 +237,14 @@ partial_state_update_blocks_unprocessed = [
         'details': """
             eth leverager
         """,
-        'enabled': True,
+        'enabled': False,
         'policies': {
             'arbitrage': p_leverage_eth
         },
         'variables': {
             'cdps': s_store_cdps,
             'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
+            'USD_balance': uniswap.update_USD_balance,
             'UNI_supply': uniswap.update_UNI_supply,
         }
     },
@@ -260,29 +263,42 @@ partial_state_update_blocks_unprocessed = [
     #################################################################
     {
         'details': """
-        Rebalance CDPs using wipes and draws 
+        Get all spot market prices 
         """,
         'enabled': True,
         'policies': {
-            'rebalance_cdps': p_rebalance_cdps,
+            'spot_market_price': markets.p_spot_market_price
         },
         'variables': {
-            'cdps': s_store_cdps,
-            'RAI_balance': uniswap.update_RAI_balance,
-            'ETH_balance': uniswap.update_ETH_balance,
-            'UNI_supply': uniswap.update_UNI_supply,
+            'spot_market_price': markets.s_spot_market_price
         }
     },
     #################################################################
     {
+        'details': """
+        Update Chainlink feed 
+        """,
         'enabled': True,
         'policies': {
             'market_price': markets.p_market_price
         },
         'variables': {
             'market_price': markets.s_market_price,
+            'market_price_timestamp': markets.s_market_price_timestamp
+        }
+    },
+    #################################################################
+    {
+        'details': """
+        Update Chainlink TWAP
+        """,
+        'enabled': True,
+        'policies': {
+            'market_price_twap': markets.p_market_price_twap
+        },
+        'variables': {
             'market_price_twap': markets.s_market_price_twap,
-            'uniswap_oracle': markets.s_uniswap_oracle
+            'market_price_twap_obj': markets.s_market_price_twap_obj
         }
     },
     #################################################################

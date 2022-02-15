@@ -129,13 +129,6 @@ def observe_errors(params, substep, state_history, state):
     else:
         prev_error = state_history[-4][0]['error_star']
     #prev_error = 0
-    '''
-    print("state_history")
-    for j in state_history:
-        print("j")
-        for k in j:
-            print("k")
-    '''
 
     return {"error_star": error, "prev_error_star": prev_error}
 

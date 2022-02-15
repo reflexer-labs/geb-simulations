@@ -24,21 +24,21 @@ import pandas as pd
 import scipy
 
 """Settings for CDP agents."""
-liquidation_ratio = 1.45
+liquidation_ratio = 1.35
 liquidation_buffer = 2
-liquidity_cdp_count = 100 # Set to zero to disable liquidity CDPs
+liquidity_cdp_count = 200 # Set to zero to disable liquidity CDPs
 
-"""Initial balances for RAI/ETH Uniswap v2 pool."""
-uniswap_rai_balance = 10e6
-uniswap_eth_balance = uniswap_rai_balance * target_price / eth_price
+"""Initial balances for RAI/USDC Uniswap v2 pool."""
+uniswap_rai_balance = 50e6
+uniswap_usd_balance = uniswap_rai_balance * target_price
 
 """Total capital given to all agents."""
-total_starting_capital = 20e6 # Base
+total_starting_capital = 40e6 # Base
 
 """Capital share allocation for each agent."""
-capital_allocation =  {'price_traders': 0/20, 'rate_traders': 5/20, 'eth_leverager': 5/20,
+capital_allocation =  {'price_traders': 0/20, 'rate_traders': 20/20, 'eth_leverager': 0/20,
                        'malicious_whale': 0, 'arbitrage_cdp': 0, 'rai_lender': 0/20,
-                       'rai_borrower': 0/20, 'base_rate_trader': 0/20, 'liquidity_cdps': 0/20,
+                       'rai_borrower': 0/20, 'base_rate_trader': 0/20, 'liquidity_cdps': 20/20,
                        'malicious_rai_trader': 0
                        }
 
@@ -57,7 +57,7 @@ def init(total_starting_capital, capital_allocation):
     rate_trader_base_balance = rate_trader_rai_balance * target_price
 
     malicious_whale_rai_balance = capital_allocation["malicious_whale"] * total_starting_capital / target_price / 2
-    malicious_whale_eth_balance = malicious_whale_rai_balance * target_price / eth_price
+    malicious_whale_usd_balance = malicious_whale_rai_balance * target_price / eth_price
 
    
     liquidity_cdp_rai_balance = capital_allocation["liquidity_cdps"] * total_starting_capital / \
@@ -82,7 +82,7 @@ def init(total_starting_capital, capital_allocation):
     return arbitrage_cdp_eth_collateral, \
            price_trader_rai_balance, price_trader_base_balance, \
            rate_trader_rai_balance, rate_trader_base_balance, \
-           malicious_whale_rai_balance, malicious_whale_eth_balance, \
+           malicious_whale_rai_balance, malicious_whale_usd_balance, \
            liquidity_cdp_rai_balance, liquidity_cdp_eth_collateral, \
            eth_leverager_rai_balance, eth_leverager_eth_balance, \
            rai_lender_balance, rai_borrower_balance, \
@@ -93,7 +93,7 @@ def init(total_starting_capital, capital_allocation):
 arbitrage_cdp_eth_collateral, \
 price_trader_rai_balance, price_trader_base_balance, \
 rate_trader_rai_balance, rate_trader_base_balance, \
-malicious_whale_rai_balance, malicious_whale_eth_balance, \
+malicious_whale_rai_balance, malicious_whale_usd_balance, \
 liquidity_cdp_rai_balance, liquidity_cdp_eth_collateral, \
 eth_leverager_rai_balance, eth_leverager_eth_balance, \
 rai_lender_balance, rai_borrower_balance, \

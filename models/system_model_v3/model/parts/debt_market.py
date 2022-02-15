@@ -73,7 +73,7 @@ def is_cdp_at_liquidation_ratio(cdp, eth_price, target_price, liquidation_ratio)
         drawn - wiped - u_bitten
     ) * target_price * liquidation_ratio
 
-def wipe_to_rr_apy(apy, eth_balance, rai_balance, eth_price, state, params):
+def wipe_to_rr_apy(apy, usd_balance, rai_balance, eth_price, state, params):
     goal_rate = apy_to_target_rate(apy)
 
     """
@@ -82,16 +82,16 @@ def wipe_to_rr_apy(apy, eth_balance, rai_balance, eth_price, state, params):
     market = target - target_rate/kp
     """
     goal_price = state['target_price'] - goal_rate/params['kp']
-    market_price = eth_balance/rai_balance * eth_price
+    market_price = usd_balance/rai_balance
 
     #print(f"wipe {goal_price=}, {market_price=}")
 
     # buy to goal_price
-    a = buy_to_price(eth_balance, rai_balance, goal_price, market_price)
+    a = buy_to_price(usd_balance, rai_balance, goal_price, market_price)
 
     return a
 
-def draw_to_rr_apy(apy, eth_balance, rai_balance, eth_price, state, params):
+def draw_to_rr_apy(apy, usd_balance, rai_balance, eth_price, state, params):
     goal_rate = apy_to_target_rate(apy)
 
     """
@@ -100,11 +100,11 @@ def draw_to_rr_apy(apy, eth_balance, rai_balance, eth_price, state, params):
     market = target - target_rate/kp
     """
     goal_price = state['target_price'] - goal_rate/params['kp']
-    market_price = eth_balance/rai_balance * eth_price
+    market_price = usd_balance/rai_balance
     #print(f"draw {state['timestep']=}, {apy=}, {goal_rate=}, {state['target_rate']=}, {goal_price=}, {market_price=}")
 
     # sell to goal_price
-    a = sell_to_price(eth_balance, rai_balance, goal_price, market_price)
+    a = sell_to_price(usd_balance, rai_balance, goal_price, market_price)
 
     return a
 
@@ -237,7 +237,7 @@ def p_rebalance_cdps(params, substep, state_history, state):
     debug = params["debug"]
     uniswap_state_delta = {
         'RAI_delta': 0,
-        'ETH_delta': 0,
+        'USD_delta': 0,
         'UNI_delta': 0,
     }
 
@@ -266,7 +266,6 @@ def p_rebalance_cdps(params, substep, state_history, state):
         cdps = pd.concat((state["cdps"], new_cdps), ignore_index=True)
 
         return {"cdps": cdps, **uniswap_state_delta}
-
     cdps = state["cdps"].copy()
     eth_price = state["eth_price"]
     target_price = state["target_price"]
@@ -274,11 +273,11 @@ def p_rebalance_cdps(params, substep, state_history, state):
     liquidation_buffer = params["liquidation_buffer"]
     
     RAI_balance = state['RAI_balance']
-    ETH_balance = state['ETH_balance']
+    USD_balance = state['USD_balance']
     uniswap_fee = params['uniswap_fee']
 
     total_RAI_delta = 0
-    total_ETH_delta = 0
+    total_USD_delta = 0
     total_UNI_delta = 0
 
     rr_apy = target_rate_to_apy(state['target_rate'])
@@ -287,7 +286,7 @@ def p_rebalance_cdps(params, substep, state_history, state):
         if cdp['arbitrage'] == 1:
             liquidation_buffer = 1.0
             continue
-        
+       
         cdp_above_liquidation_buffer = is_cdp_above_liquidation_ratio(
             cdp, eth_price, target_price, liquidation_ratio * liquidation_buffer
         )
@@ -304,30 +303,30 @@ def p_rebalance_cdps(params, substep, state_history, state):
             if params['max_redemption_rate'] == float("inf") or params['kp'] == 0:
                 wipe = wipe_to_liq
             else:
-                wipe_apy = wipe_to_rr_apy(params['min_redemption_rate'], ETH_balance,
+                wipe_apy = wipe_to_rr_apy(params['min_redemption_rate'], USD_balance,
                                        RAI_balance, eth_price, state, params)
                 wipe = min(wipe_to_liq, wipe_apy)
 
-            # Exchange ETH for RAI
-            ETH_delta, _ = get_output_price(wipe, ETH_balance, RAI_balance, uniswap_fee)
-            if not ETH_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
-            if not ETH_delta <= ETH_balance: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+            # Exchange USD for RAI
+            USD_delta, _ = get_output_price(wipe, USD_balance, RAI_balance, uniswap_fee)
+            if not USD_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{USD_delta=}')
+            if not USD_delta <= USD_balance: raise failure.InvalidSecondaryMarketDeltaException(f'{USD_delta=}')
 
-            if debug:
-                print(f"SAFE below liquidation buffer. {ETH_delta=}, RAI_delta {-wipe}")
+            #if debug:
+            #    print(f"SAFE below liquidation buffer. {USD_delta=}, RAI_delta {-wipe}")
 
             RAI_delta = -wipe
 
-            ETH_balance += ETH_delta
+            USD_balance += USD_delta
             RAI_balance -= wipe
             total_RAI_delta -= wipe
-            total_ETH_delta += ETH_delta
+            total_USD_delta += USD_delta
 
             if not RAI_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
             cdps.at[index, "wiped"] = cdps.at[index, "wiped"] + wipe
 
         elif cdp_above_liquidation_buffer and rr_apy < params['max_redemption_rate']:
-            # Draw debt, sell RAI for ETH on Uniswap
+            # Draw debt, sell RAI for USD on Uniswap
             draw_to_liq = draw_to_liquidation_ratio(
                 cdp,
                 eth_price,
@@ -338,22 +337,22 @@ def p_rebalance_cdps(params, substep, state_history, state):
             if params['max_redemption_rate'] == float("inf") or params['kp'] == 0:
                 draw = draw_to_liq
             else:
-                draw_apy = draw_to_rr_apy(params['max_redemption_rate'], ETH_balance,
+                draw_apy = draw_to_rr_apy(params['max_redemption_rate'], USD_balance,
                                        RAI_balance, eth_price, state, params)
                 draw = min(draw_to_liq, draw_apy)
 
-            # Exchange RAI for ETH
-            _, ETH_delta = get_input_price(draw, RAI_balance, ETH_balance, uniswap_fee)
-            if not ETH_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{ETH_delta=}')
+            # Exchange RAI for USD
+            _, USD_delta = get_input_price(draw, RAI_balance, USD_balance, uniswap_fee)
+            if not USD_delta <= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{USD_delta=}')
             RAI_delta = draw
 
-            if debug:
-                print(f"SAFE above liquidation buffer. {ETH_delta=}, RAI_delta {draw}")
+            #if debug:
+            #    print(f"SAFE above liquidation buffer. {USD_delta=}, RAI_delta {draw}")
 
-            ETH_balance += ETH_delta
+            USD_balance += USD_delta
             RAI_balance += draw
             total_RAI_delta += draw
-            total_ETH_delta += ETH_delta
+            total_USD_delta += USD_delta
             if not RAI_delta >= 0: raise failure.InvalidSecondaryMarketDeltaException(f'{RAI_delta=}')
             cdps.at[index, "drawn"] = cdps.at[index, "drawn"] + draw
 
@@ -365,7 +364,7 @@ def p_rebalance_cdps(params, substep, state_history, state):
         )
 
     uniswap_state_delta['RAI_delta'] = total_RAI_delta
-    uniswap_state_delta['ETH_delta'] = total_ETH_delta
+    uniswap_state_delta['USD_delta'] = total_USD_delta
     uniswap_state_delta['UNI_delta'] = total_UNI_delta
 
     return {"cdps": cdps, **uniswap_state_delta}

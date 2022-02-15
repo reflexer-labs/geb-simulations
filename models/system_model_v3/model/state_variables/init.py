@@ -1,15 +1,16 @@
-from models.system_model_v3.model.state_variables.liquidity import cdps, uniswap_rai_balance, uniswap_eth_balance
+from models.system_model_v3.model.state_variables.liquidity import cdps, uniswap_rai_balance, uniswap_usd_balance
 from models.system_model_v3.model.state_variables.liquidity import price_trader_rai_balance, price_trader_base_balance
 from models.system_model_v3.model.state_variables.liquidity import rate_trader_rai_balance, rate_trader_base_balance
 from models.system_model_v3.model.state_variables.liquidity import liquidity_cdp_eth_collateral, liquidity_cdp_rai_balance
 from models.system_model_v3.model.state_variables.liquidity import liquidity_cdp_count
 from models.system_model_v3.model.state_variables.liquidity import arbitrage_cdp_eth_collateral
-from models.system_model_v3.model.state_variables.liquidity import malicious_whale_eth_balance, malicious_whale_rai_balance, malicious_rai_trader_balance
+from models.system_model_v3.model.state_variables.liquidity import malicious_whale_usd_balance, malicious_whale_rai_balance, malicious_rai_trader_balance
 from models.system_model_v3.model.state_variables.liquidity import eth_leverager_rai_balance, eth_leverager_eth_balance
 from models.system_model_v3.model.state_variables.liquidity import base_rate_trader_balance, rai_borrower_balance, rai_lender_balance
 from models.system_model_v3.model.state_variables.system import stability_fee, target_price
 from models.system_model_v3.model.state_variables.historical_state import eth_price
 from models.system_model_v3.model.parts.uniswap_oracle import UniswapOracle
+from models.system_model_v3.model.parts.chainlink_twap import ChainlinkTWAP
 
 import datetime as dt
 
@@ -29,7 +30,7 @@ state_variables = {
     # Exogenous states
     'eth_price': eth_price, # unit: dollars; updated from historical data as exogenous parameter
     'liquidity_demand': 1,
-    'liquidity_demand_mean': 1, # net transfer in or out of RAI tokens in the ETH-RAI pool
+    'liquidity_demand_mean': 1, # net transfer in or out of RAI tokens in the RAI-USD pool
     
     # CDP states
     'cdps': cdps, # A dataframe of CDPs (both open and closed)
@@ -90,20 +91,25 @@ state_variables = {
     'error_star': 0, # price units
     'prev_error_star': 0, # price units
     'error_star_integral': 0, # price units x seconds
-    
+  
+
+    'spot_market_price': target_price,
+    'market_price_timestamp': 0,
+    'market_price_feed': 0,
+    'market_price_twap_obj': ChainlinkTWAP(
+        granularity=3,
+        window_size=24*3600,
+        max_window_size=4*24*3600
+    ),
+
     # Uniswap states
     'market_slippage': 0,
     'RAI_balance': uniswap_rai_balance,
-    'ETH_balance': uniswap_eth_balance,
-    'UNI_supply': uniswap_rai_balance,
-    'uniswap_oracle': UniswapOracle(
-        window_size=16*3600, # 16 hours
-        max_window_size=24*3600, # 24 hours
-        granularity=4 # period = window_size / granularity
-    ),
+    'USD_balance': uniswap_usd_balance,
+    'UNI_supply': 0,
 
     # price pump whale
-    'malicious_whale_funds_eth': malicious_whale_eth_balance,
+    'malicious_whale_funds_eth': malicious_whale_usd_balance,
     'malicious_whale_funds_rai': malicious_whale_rai_balance,
     'malicious_whale_state': 0, #0 when the whale has not started, 1 after the whale has started
     'malicious_whale_p0': 0, #price of RAI which the whale considers as the non-pumped price (set by the whale when it starts)

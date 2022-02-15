@@ -64,8 +64,8 @@ from models.constants import RAY
 # %%
 # Number of timesteps(hours) to run
 # Max timesteps is 24 * 30 * 12 = 1 year
-SIMULATION_TIMESTEPS = 24 * 30 * 1
-#SIMULATION_TIMESTEPS = 24 * 2
+SIMULATION_TIMESTEPS = 24 * 30 * 6
+#SIMULATION_TIMESTEPS = 24*10
 
 # Number of runs. Each run uses a different simulated ETH dataset
 MONTE_CARLO_RUNS = 1
@@ -82,22 +82,23 @@ params_override = {
     'liquidity_demand_enabled': [False],
     'liquidity_demand_shock': [False],
     'liquidation_buffer': [2],
-    'max_redemption_rate': [50], # used by SAFE owners
-    'min_redemption_rate': [-50], # used by SAFE owners
+    'max_redemption_rate': [20], # used by SAFE owners
+    'min_redemption_rate': [-20], # used by SAFE owners
     #'kp': [1e-8, 1e-7],
     #'ki': [5e-15, 5e-14],
-    'kp': [5e-7],
-    'ki': [0],
-    'alpha': [0.999999 * RAY],
-    'rate_trader_mean_pct': [3],
+    'kp': [5e-8],
+    'ki': [5e-15],
+    'alpha': [0.9999998716 * RAY],# 0.9999998716 -> 5% of integral is > 270 days old
+    'rate_trader_count': [100],
+    'rate_trader_mean_pct': [1.5],
     'rate_trader_min_pct': [1],
-    'rate_trader_std_pct': [2 * (3-0)],
-    'rate_trader_mean_days': [0],
+    'rate_trader_std_pct': [2 * (1.5-1)],
+    'rate_trader_mean_days': [180],
     'rate_trader_min_days': [0],
-    'rate_trader_std_days': [2 * (0-0)],
+    'rate_trader_std_days': [2 * (180-0)],
     'uniswap_fee': [0],
-    'eth_leverager_target_min_liquidity_ratio': [2.9],
-    'eth_leverager_target_max_liquidity_ratio': [2.9]
+    'eth_leverager_target_min_liquidity_ratio': [2.7],
+    'eth_leverager_target_max_liquidity_ratio': [2.7]
 }
 params_update = generate_params(params_override)
 params.update(params_update)
@@ -109,16 +110,18 @@ params.update(params_update)
 start = time.time()
 df_raw = run_experiment(timesteps=SIMULATION_TIMESTEPS,
                runs=MONTE_CARLO_RUNS, params=params);
-df = post_process_results(df_raw, params)
+
+# %%
+df = post_process_results(df_raw, params, set_params=['eth_trend', 'kp', 'ki'])
 print(f"Run experiment and post-process took {time.time() - start} secs")
 
 # %%
 # Optionally, trim results by timestep
 #df_trim = df
-df_trim = df[df['timestep'] >= 17][df['timestep'] <= 24*30*12]
+df_trim = df[df['timestep'] >= 24*7][df['timestep'] <= 24*30*12]
 
 # %%
-df_trim['market_price'].head(3)
+df_trim['timestep'].head(3)
 
 
 # %%
@@ -128,18 +131,20 @@ def facet_plot(df, run, facet_col, facet_row):
     """
     
     # Just plot first facet_col, facet_row since eth is same for all
-    first_col = df[f'{facet_col}'].unique()[0]
-    first_row = df[f'{facet_row}'].unique()[0]
+    #first_col = df[f'{facet_col}'].unique()[0]
+    #first_row = df[f'{facet_row}'].unique()[0]
     png_renderer.height = 700
     fig = px.line(
-        df.query(f'run == {run}')
-          .query(f'{facet_col} == {first_col}')
-          .query(f'{facet_row} == {first_row}'),
+        df.query(f'run == {run}'),
+          #.query(f'{facet_col} == {first_col}')
+          #.query(f'{facet_row} == {first_row}'),
         title=f"ETH/USD",
         x="timestamp",
         y=["eth_price"],
         color_discrete_sequence=['blue'],
-        labels={'timestamp': '', 'eth_price': ''}
+        labels={'timestamp': '', 'eth_price': ''},
+        facet_col=f'{facet_col}',
+        facet_row=f'{facet_row}'
     )
     fig.update_layout(width=500, height=2000)
     fig.data[0].name = "ETH/USD"
@@ -156,24 +161,47 @@ def facet_plot(df, run, facet_col, facet_row):
         df.query(f'run == {run}'),
         title=f"RAI/USD",
         x="timestamp",       
-        y=["market_price", "market_price_twap", "target_price"],
-        color_discrete_sequence=['purple', 'black', 'red'],
-        labels={'timestamp': '', 'target_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
+        y=["spot_market_price", "market_price", "market_price_twap", "target_price"],
+        color_discrete_sequence=['blue', 'purple', 'black', 'red'],
+        labels={'timestamp': '', 'target_price': '', 'spot_market_price': '', 'market_price': '', 'market_price_twap': '', 'value': ''},
         facet_col=f'{facet_col}',
         facet_row=f'{facet_row}'
     )
-    fig.data[0].name = "RAI/USD"
-    fig.data[1].name = "RAI/USD TWAP"
-    fig.data[2].name = "Redemption Price"
+    fig.data[0].name = "RAI/USD Spot"
+    fig.data[1].name = "RAI/USD Feed"
+    fig.data[2].name = "RAI/USD TWAP"
+    fig.data[3].name = "Redemption Price"
     #fig.for_each_annotation(lambda a: a.update(text=a.text.replace("max_redemption_rate", "max rate")))
 
     fig.update_layout(title_x=0.5)
     fig.update_layout({'legend_title_text': '', 'legend_x': 0.0, 'legend_y': 0})
-    fig.update_layout(showlegend=False)
+    fig.update_layout(showlegend=True)
     fig.update_layout(font={'size': 24})
     fig.update_traces(line=dict(width=2))
     fig.update_layout(yaxis={'title': ''}, xaxis={'title': ''})
     fig.show()
+    
+    fig = px.line(
+        df.query(f'run == {run}'),
+        title=f"Error Integral",
+        x="timestamp",       
+        y=["error_star_integral"],
+        color_discrete_sequence=['blue'],
+        labels={'timestamp': '', 'error_star_integral': '', 'value': ''},
+        facet_col=f'{facet_col}',
+        facet_row=f'{facet_row}'
+    )
+    fig.data[0].name = "Error Integral"
+
+
+    fig.update_layout(title_x=0.5)
+    fig.update_layout({'legend_title_text': '', 'legend_x': 0.0, 'legend_y': 0})
+    fig.update_layout(showlegend=True)
+    fig.update_layout(font={'size': 24})
+    fig.update_traces(line=dict(width=2))
+    fig.update_layout(yaxis={'title': ''}, xaxis={'title': ''})
+    fig.show()
+    
     
     fig = px.line(
         df.query(f'run == {run}'),
@@ -202,17 +230,20 @@ def facet_plot(df, run, facet_col, facet_row):
     
     fig = px.line(
         df.query(f'run == {run}'),
-        title=f"Rate trader total base",
+        title=f"Rate trader balances(USD)",
         x="timestamp",       
-        y=['rate_trader_total_base'],
-        color_discrete_sequence=["green"],
+        y=['rate_trader_total_base', 'rate_trader_base', 'rate_trader_total_rai_base'],
+        color_discrete_sequence=['black', 'green', 'blue'],
         facet_col=f'{facet_col}',
         facet_row=f'{facet_row}'
     )
 
+    fig.data[0].name = "Total"
+    fig.data[1].name = "Base"
+    fig.data[1].name = "RAI"
     fig.update_layout(title_x=0.5)
     fig.update_layout({'legend_title_text': '', 'legend_x': 0.00, 'legend_y': 1.0})
-    fig.update_layout(showlegend=False)
+    fig.update_layout(showlegend=True)
     fig.update_layout(font={'size':24})
     fig.update_traces(line=dict(width=2))
     fig.show()
@@ -251,8 +282,15 @@ def facet_plot(df, run, facet_col, facet_row):
     fig.update_traces(line=dict(width=2))
     fig.show()
 
-
 # %%
 for run in range(1, MONTE_CARLO_RUNS + 1):
     print(f"{run=}")
-    facet_plot(df_trim, run, facet_col='ki', facet_row='kp')
+    facet_plot(df_trim, run, facet_col='eth_trend', facet_row='kp')
+
+# %%
+df_trim[['market_price', 'market_price_twap']].head(50)
+
+# %%
+len(df_trim)
+
+# %%

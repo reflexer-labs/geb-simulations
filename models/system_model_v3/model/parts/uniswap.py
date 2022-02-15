@@ -18,11 +18,20 @@ def update_ETH_balance(params, substep, state_history, state, policy_input):
     if not updated_ETH_balance > 0: raise failure.NegativeBalanceException(f'Uniswap ETH {ETH_balance=} {ETH_delta=}')
     return "ETH_balance", updated_ETH_balance
 
+def update_USD_balance(params, substep, state_history, state, policy_input):
+    """Updates USD balance in uniswap by modifying it with delta change."""
+    USD_balance = state['USD_balance']
+    USD_delta = policy_input['USD_delta']
+    updated_USD_balance = USD_balance + USD_delta
+    if not updated_USD_balance > 0: raise failure.NegativeBalanceException(f'Uniswap USD {USD_balance=} {USD_delta=}')
+    return "USD_balance", updated_USD_balance
+
+
 def update_UNI_supply(params, substep, state_history, state, policy_input):
     UNI_supply = state['UNI_supply']
     UNI_delta = policy_input['UNI_delta']
     updated_UNI_supply = UNI_supply + UNI_delta
-    if not updated_UNI_supply > 0: raise failure.NegativeBalanceException(f'Uniswap UNI {UNI_supply=} {UNI_delta=}')
+    if not updated_UNI_supply >= 0: raise failure.NegativeBalanceException(f'Uniswap UNI {UNI_supply=} {UNI_delta=}')
     return "UNI_supply", updated_UNI_supply
 
 # Uniswap functions
@@ -72,6 +81,11 @@ def get_input_price(dx, x_balance, y_balance, trade_fee=0.01):
     '''
     How much y received for selling dx?
 
+    Parameters:
+    ----------
+    dx: float
+        Pool delta of x
+
     Example:
     new_x = (1 + alpha)*x_balance
     new_y = y_balance - dy
@@ -91,6 +105,14 @@ def get_input_price(dx, x_balance, y_balance, trade_fee=0.01):
 def get_output_price(dy, x_balance, y_balance, trade_fee=0.01):
     '''
     How much x needs to be sold to buy dy?
+
+    Parameters:
+    ----------
+    dy: float
+        How much y buying 
+
+    Returns:
+      x_delta, y_delta  of pool
 
     Example:
     new_x = x_balance + dx
@@ -135,20 +157,20 @@ def token_to_collateral(tokens, reserve_balance, supply_balance, trade_fee):
     
     return abs(dy)
 
-def buy_to_price(eth_balance, rai_balance, goal_price, market_price):
+def buy_to_price(usd_balance, rai_balance, goal_price, market_price):
     '''
     How much RAI to buy to achieve a goal market price?
     '''
     a = rai_balance * ((market_price/goal_price)**(1/2) - 1)
 
-    # if a is positive, we're already past our goal price
-    return max(-a,0)
+    # if a is positive, we're already past our goal price, so take max
+    return max(-a, 0)
 
-def sell_to_price(eth_balance, rai_balance, goal_price, market_price):
+def sell_to_price(usd_balance, rai_balance, goal_price, market_price):
     '''
     How much RAI to sell to achieve a goal market price?
     '''
     a = rai_balance * ((market_price/goal_price)**(1/2) - 1)
 
-    # if a is negative, we're already past our goal price
+    # if a is negative, we're already past our goal price, so take max
     return max(a, 0)

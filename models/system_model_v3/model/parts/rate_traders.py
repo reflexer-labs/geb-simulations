@@ -44,7 +44,7 @@ def p_trade_rate(params, substep, state_history, state):
     Buy when the market price is less than (future_redemption_price * (1 - deviation) * premium).
     Agent's behaviour is explained nicely in the simulations blog series.
     """
-    uniswap_state_delta = {'RAI_delta': 0, 'ETH_delta': 0, 'UNI_delta': 0}
+    uniswap_state_delta = {'RAI_delta': 0, 'USD_delta': 0, 'UNI_delta': 0}
     debug = params['debug']
     timestep = state['timestep']
 
@@ -56,7 +56,7 @@ def p_trade_rate(params, substep, state_history, state):
 
 
     RAI_balance = state['RAI_balance']
-    ETH_balance = state['ETH_balance']
+    USD_balance = state['USD_balance']
     UNI_supply = state['UNI_supply']
 
     eth_price = state['eth_price']
@@ -76,7 +76,7 @@ def p_trade_rate(params, substep, state_history, state):
         redemption_price = state['target_price'] * effective_rate * params['trader_market_premium']
 
         # get latest market price
-        market_price = ETH_balance/RAI_balance * eth_price
+        market_price = USD_balance/RAI_balance
 
         trader_rai_balance = rate_trader['rai_balance']
         trader_base_balance = rate_trader['base_balance']
@@ -91,101 +91,106 @@ def p_trade_rate(params, substep, state_history, state):
                           }
         
         RAI_delta = 0
-        ETH_delta = 0
+        USD_delta = 0
         BASE_delta = 0
         UNI_delta = 0
 
         expensive_RAI = redemption_price * (1 + rate_trader_bound) < (1 - uniswap_fee) * market_price
         cheap_RAI = redemption_price * (1 - rate_trader_bound) > (1 + uniswap_fee) * market_price
 
-        # How far to trade to the peg. 1 = all the way
-        trade_ratio = random.uniform(0.8, 1.0)
-        trade_ratio = 1.0
+        # How far to trade to the effective redemption price. 1 = all the way
+        trade_ratio = random.uniform(0.1, 0.5)
+        #trade_ratio = 1.0
         if expensive_RAI and trader_rai_balance > 0:
             # sell rai to redemption price
-            if params['debug']:
-                print(f"{timestep=}, {ETH_balance=},{RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
+            if debug:
+                print(f"{timestep=}, {USD_balance=},{RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
 
             # sell to redemption
             try:
-                a = sell_to_price(ETH_balance, RAI_balance, redemption_price, market_price)
+                rai_to_sell = sell_to_price(USD_balance, RAI_balance, redemption_price, market_price)
             except ValueError as e:
-                raise failure.PriceTraderConditionException(f'{RAI_balance=}, {ETH_balance=}, {desired_eth_rai=}')
+                raise failure.PriceTraderConditionException(f'{RAI_balance=}, {USD_balance=}, {desired_eth_rai=}')
 
-            if a < 0: raise failure.PriceTraderConditionException(f'{a=}')
+            if rai_to_sell < 0: raise failure.PriceTraderConditionException(f'{rai_to_sell=}')
 
             # sell as much as we have or enough to move market to redemption price
-            RAI_delta = min(trader_rai_balance, a * trade_ratio)
+            RAI_delta = min(trader_rai_balance, rai_to_sell * trade_ratio)
 
-            if not RAI_delta > 0:
+            if RAI_delta <= 0:
                 RAI_delta = 0
-                ETH_delta = 0
+                USD_delta = 0
                 BASE_delta = 0
             else:
-                # Swap RAI for ETH
-                _, ETH_delta = get_input_price(RAI_delta, RAI_balance, ETH_balance, uniswap_fee)
-                if not ETH_delta < 0: raise failure.PriceTraderConditionException(f'{ETH_delta=}')
-                if params['debug']:
-                    print(f"{'rate trader selling':25} {RAI_delta=:.2f}, {ETH_delta=:.2f}, "
+                # Swap RAI for USD
+                _, USD_delta = get_input_price(RAI_delta, RAI_balance, USD_balance, uniswap_fee)
+                if not USD_delta < 0: raise failure.PriceTraderConditionException(f'{USD_delta=}')
+                if debug:
+                    print(f"{'rate trader selling':25} {RAI_delta=:.2f}, {USD_delta=:.2f}, "
                           f"{market_price=:.6f}, {redemption_price=:.6f}")
-                BASE_delta = ETH_delta * eth_price
+                BASE_delta = USD_delta
                 updated_trader['n_sells'] += 1
 
             updated_trader['rai_balance'] -= RAI_delta
             updated_trader['base_balance'] -= BASE_delta
 
             uniswap_state_delta['RAI_delta'] += RAI_delta
-            uniswap_state_delta['ETH_delta'] += ETH_delta
+            uniswap_state_delta['USD_delta'] += USD_delta
             uniswap_state_delta['UNI_delta'] += UNI_delta
 
             # update pool locally after each trader
             RAI_balance += RAI_delta
-            ETH_balance += ETH_delta
+            USD_balance += USD_delta
+            #print(f"after trade market_price: {USD_balance/RAI_balance:.6f}")
            
         elif cheap_RAI and trader_base_balance > 0:
             # buy rai to redemption price
-            if params['debug']:
-                print(f"{timestep=}, {ETH_balance=}, {RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
-            desired_eth_rai = ETH_balance/RAI_balance * (redemption_price/market_price)
+            if debug:
+                print(f"{timestep=}, {USD_balance=}, {RAI_balance=}, {market_price=:.6f}, {redemption_price=:.6f}")
 
             try:
-                a = math.sqrt(RAI_balance * ETH_balance/desired_eth_rai) - RAI_balance
-                a = buy_to_price(ETH_balance, RAI_balance, redemption_price, market_price)
+                rai_to_buy = buy_to_price(USD_balance, RAI_balance, redemption_price, market_price)
             except ValueError as e:
-                raise failure.PriceTraderConditionException(f'{RAI_balance=}, {ETH_balance=}, {desired_eth_rai=}')
+                raise failure.PriceTraderConditionException(f'{RAI_balance=}, {USD_balance=}, {desired_eth_rai=}')
 
-            if a < 0: raise failure.PriceTraderConditionException(f'{a=}')
+            if rai_to_buy < 0: raise failure.PriceTraderConditionException(f'{rai_to_buy=}')
 
-            eth = trader_base_balance / eth_price
-            _, rai_to_buy = get_input_price(eth, ETH_balance, RAI_balance, uniswap_fee)
+            #eth = trader_base_balance / eth_price
+            #How much rai can be bought if using entire trader balance
+            _, rai_delta_all = get_input_price(trader_base_balance, USD_balance, RAI_balance, uniswap_fee)
+            if debug:
+                print(f"{rai_to_buy=}, {rai_delta_all=}")
 
             # buy as much as we can afford or enough to move market to redemption price
-            RAI_delta = min(-rai_to_buy, a * trade_ratio)
+            # RAI_delta will be positive when buying here
+            RAI_delta = min(-rai_delta_all, rai_to_buy * trade_ratio)
+            #print(f"{RAI_delta=}")
 
-            if not RAI_delta > 0:
+            if RAI_delta <= 0:
                 RAI_delta = 0
-                ETH_delta = 0
+                USD_delta = 0
                 BASE_delta = 0
             else:
-                ETH_delta, _ = get_output_price(RAI_delta, ETH_balance, RAI_balance, uniswap_fee)
+                USD_delta, _ = get_output_price(RAI_delta, USD_balance, RAI_balance, uniswap_fee)
 
-                if not ETH_delta > 0: raise failure.PriceTraderConditionException(f'{ETH_delta=}')
+                if not USD_delta > 0: raise failure.PriceTraderConditionException(f'{USD_delta=},{RAI_delta=}')
                 if params['debug']:
-                    print(f"{'rate trader buying':25} {RAI_delta=:.2f}, {ETH_delta=:.2f}, "
+                    print(f"{'rate trader buying':25} {RAI_delta=:.2f}, {USD_delta=:.2f}, "
                           f"{market_price=:.2f}, {redemption_price=:.2f}")
-                BASE_delta = ETH_delta * eth_price
+                BASE_delta = USD_delta
                 updated_trader['n_buys'] += 1
 
             updated_trader['rai_balance'] += RAI_delta
             updated_trader['base_balance'] -= BASE_delta
 
             uniswap_state_delta['RAI_delta'] -= RAI_delta
-            uniswap_state_delta['ETH_delta'] += ETH_delta
+            uniswap_state_delta['USD_delta'] += USD_delta
             uniswap_state_delta['UNI_delta'] += UNI_delta
 
             # update pool locally after each trader
             RAI_balance -= RAI_delta
-            ETH_balance += ETH_delta
+            USD_balance += USD_delta
+            #print(f"after trade market_price: {USD_balance/RAI_balance:.6f}")
 
         updated_traders.append(updated_trader)
 
