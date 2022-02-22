@@ -125,6 +125,13 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
     // Get the redemption price
     var latestRedemptionPrice = (await oracleRelayer.redemptionPrice.call()).toString();
 
+    // Get the redemption price update time
+    var latestRedemptionPriceUpdateTime = (await oracleRelayer.redemptionPriceUpdateTime.call()).toString();
+
+    // Get the redemption rate
+    var latestRedemptionRate = (await oracleRelayer.redemptionRate.call()).toString();
+
+
     // Get the next per-second rate
     var pscl = (await calculator.pscl.call()).toString();
     var tlv = (await calculator.tlv.call()).toString();
@@ -134,9 +141,12 @@ contract('PIRawPerSecondCalculator Imported Config', function(accounts) {
     var gainAdjustedTerms = await calculator.getGainAdjustedTerms(nextRateData[1], nextRateData[2], {from: accounts[0]});
 
     if (print) {
+      console.log("Advanced time: " + randomDelay)
       console.log("Contract Computed Per-Second Redemption Rate: " + nextRateData[0].toString(10))
       console.log("Market Price: " + randomPrice.toString(10))
-      console.log("Redemption Price: " + latestRedemptionPrice)
+      console.log("Redemption Rate: " + latestRedemptionRate)
+      console.log("Latest Redemption Price: " + latestRedemptionPrice)
+      console.log("Latest Redemption Price Update Time: " + latestRedemptionPriceUpdateTime)
       console.log("Redemption Rate Timeline (Seconds): " + nextRateData[3].toString(10))
     }
 
